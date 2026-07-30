@@ -34,11 +34,21 @@ uv run matchory-coding-style sync --preset strict
 
 Do not edit files under `.matchory/` directly; edits are overwritten the next time `sync` runs.
 
-## Adding a module
+## Renaming the package
 
-If `uv sync` ran before a module existed under `src/matchory_template/`, adding the module and
-running a plain `uv sync` again can leave a stale editable install. Force a rebuild with:
+Renaming `matchory-template-python` / `matchory_template` touches `pyproject.toml`'s `name` and
+`[tool.hatch.build.targets.wheel].packages`, the `src/matchory_template/` directory, and the import
+in `tests/test_greeting.py`. Once all four agree, a plain `uv sync` picks up the new name — no
+forced reinstall is needed.
 
-```bash
-uv sync --reinstall-package matchory-template-python
-```
+## `tests/__init__.py`
+
+This file is empty on purpose. `strict` selects `INP` (implicit namespace packages), and `INP001`
+fires on `tests/` unless it is a real package. `base.toml`'s `**/tests/**` per-file-ignores cover
+only `S105`/`S106`/`S107`/`PLC0415`, not `INP001`, so the file has to exist. Don't delete it.
+
+## Claude Code hook
+
+`.claude/settings.json` runs `ruff format` on a Python file after every edit. The hook pipes its
+input through `jq`; if `jq` is not installed, the pipeline no-ops instead of failing, so formatting
+silently falls back to whatever runs at commit or CI time.

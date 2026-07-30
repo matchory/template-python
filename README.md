@@ -13,8 +13,13 @@ uvx pre-commit install
 ```
 
 `uv sync` installs the project and its dev dependencies into `.venv` and builds the package in
-editable mode. `pre-commit install` wires the git hooks that run the same checks CI runs, against
-only the files you changed.
+editable mode. `pre-commit install` wires git hooks that re-run ruff and the style-wiring check
+against the files you changed, on every commit. The hooks and CI overlap but are not identical:
+pre-commit does not run `uv run pytest`, and CI does not invoke pre-commit itself. The hooks also
+bring their own ruff — `matchory-coding-style`'s pre-commit environment resolves `ruff>=0.14.0`
+independently, at hook-install time, from whatever `ruff` version `uv.lock` pins for the project
+venv. If pre-commit reformats a file that CI then reports as unformatted, or the other way around,
+that version skew is the first thing to check.
 
 ## Commands
 
@@ -25,9 +30,13 @@ uv run ruff format .                            # format
 uv run matchory-coding-style verify --strict    # confirm the style wiring itself is intact
 ```
 
-`matchory-coding-style verify --strict` is the acceptance test for this template: if it exits 0,
-the ruff configuration, `.editorconfig`, and pre-commit hook are all correctly wired to the
-`strict` preset. CI runs it on every push and pull request, alongside lint, format, and tests.
+`matchory-coding-style verify --strict` checks that `.matchory/`, `.editorconfig`, and
+`pyproject.toml`'s `[tool.ruff]` all agree with the currently installed `matchory-coding-style`,
+whichever preset `.matchory/ruff.toml` selects. It does not inspect `.pre-commit-config.yaml`, and
+on its own it does not prove this repository is on `strict` rather than `base` — a repository
+synced to `base` passes it too. CI asserts the `strict` selector separately, with
+`matchory-coding-style sync --check --preset strict`, alongside `verify --strict`, lint, format,
+and tests, on every push and pull request.
 
 This project uses the `strict` preset rather than `base`. `base` exists to let an established
 codebase adopt the shared style gradually; a repository freshly created from this template has no
@@ -55,22 +64,36 @@ The same command also refreshes `.editorconfig`. It is one of the files `matchor
 verify` checks, so if your editor or another tool rewrites it, `sync --preset strict` is how you
 put it back.
 
-## Adding your first module
+## Make it yours
 
-`uv sync` builds the package from whatever is in `src/matchory_template/` at the time it runs. If
-you run `uv sync` before adding real code, then add a module and run a plain `uv sync` again, uv
-may treat the package as unchanged and skip rebuilding it, leaving you with a stale editable
-install and `ModuleNotFoundError` even though the file exists on disk. Force a rebuild with:
+A fresh clone builds a package named `matchory-template-python`, importing as `matchory_template`.
+Renaming it touches four places:
 
-```bash
-uv sync --reinstall-package matchory-template-python
-```
+1. `name` in `pyproject.toml`
+2. `[tool.hatch.build.targets.wheel].packages` in `pyproject.toml` — the build breaks the moment
+   this still points at a directory that no longer exists
+3. the directory `src/matchory_template/`
+4. the import in `tests/test_greeting.py`
+
+Once all four agree, a plain `uv sync` rebuilds and reinstalls the package under the new name —
+uv treats the renamed project as a different requirement from the one already installed, so it
+uninstalls the old one and installs the new one in the same run. No forced reinstall is needed.
 
 ## Keeping the dependency and the pre-commit hook in sync
 
 `pyproject.toml` pins `matchory-coding-style` with a floating lower bound
 (`matchory-coding-style>=0.1.2`), while `.pre-commit-config.yaml` pins the hook to a fixed
-`rev: v0.1.2`. These agree today, but nothing keeps them in sync automatically. If you bump one
-without the other, the CLI installed via `uv sync` can run a different `sync` than the version the
-pinned pre-commit hook checks against with `--check`, and the two can start disagreeing about
-whether the repository is in sync. Bump both together.
+`rev: v0.1.2`. These agree today, but nothing keeps them in sync automatically, and Dependabot will
+actively pull them apart: it has no pre-commit ecosystem configured here, so it bumps the
+`uv.lock` dependency without ever touching `rev:`.
+
+The good news is that the resulting drift announces itself. `verify` compares `.matchory/` against
+whatever `matchory-coding-style` is currently installed, so once a newer version changes the
+presets, CI's "Style wiring" job fails on the Dependabot pull request itself, before it can merge
+silently. The fix is:
+
+```bash
+uv run matchory-coding-style sync --preset strict
+```
+
+Commit the result, and bump `.pre-commit-config.yaml`'s `rev:` to match the new version.
