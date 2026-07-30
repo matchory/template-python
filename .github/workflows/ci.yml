@@ -22,6 +22,8 @@ jobs:
         include:
           - name: Style wiring
             run: uv run matchory-coding-style verify --strict
+          - name: Style selector
+            run: uv run matchory-coding-style sync --check --preset strict
           - name: Lint
             run: uv run ruff check --no-cache .
           - name: Formatting
@@ -69,7 +71,7 @@ jobs:
               echo "::error::unpinned action: ${reference}"
               status=1
             fi
-          done < <(grep -rhE '^\s*-?\s*uses:' .github/workflows/)
+          done < <(grep -rhE '^\s*-?\s*uses:' .github/)
 
           if [ "${status}" -eq 0 ]; then
             echo "All actions are pinned to commit SHAs"
