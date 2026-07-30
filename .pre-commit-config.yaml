@@ -2,10 +2,9 @@ repos:
   - repo: https://github.com/matchory/coding-style
     rev: v0.1.2
     hooks:
+      # `sync --check` defaults to the base preset, so the selected preset has to be passed
+      # explicitly or the check compares against rules this project does not use.
       - id: matchory-coding-style
-        # The pinned hook runs `sync --check` with no `--preset`, which defaults to `base` instead of
-        # reading back the preset this repository already selected. Without this override the hook
-        # always reports the copied preset as out of date, even though `strict` is current.
         args: ["--preset", "strict"]
       - id: matchory-ruff
       - id: matchory-ruff-format
