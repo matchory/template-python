@@ -1,0 +1,24 @@
+{
+    "permissions": {
+        "allow": [
+            "Bash(uv run ruff check:*)",
+            "Bash(uv run ruff format:*)",
+            "Bash(uv run pytest:*)",
+            "Bash(uv run matchory-coding-style:*)",
+            "Bash(uv sync:*)"
+        ]
+    },
+    "hooks": {
+        "PostToolUse": [
+            {
+                "matcher": "Edit|Write",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "jq -r '.tool_input.file_path // empty' | { read -r f; [ -n \"$f\" ] && [ \"${f##*.}\" = py ] && uv run ruff format --quiet \"$f\" >/dev/null 2>&1 || true; }"
+                    }
+                ]
+            }
+        ]
+    }
+}

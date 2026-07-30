@@ -1,9 +1,8 @@
 [project]
 name = "matchory-template-python"
 version = "0.1.0"
-# No `readme` field yet: hatchling validates the referenced file exists even for `uv sync`, and
-# README.md is created by a later task alongside the field that points at it.
 description = "Matchory Python project template."
+readme = "README.md"
 requires-python = ">=3.13"
 authors = [{ name = "Matchory GmbH", email = "info@matchory.com" }]
 dependencies = []
