@@ -1,0 +1,5 @@
+# Written by `matchory-coding-style sync`. Do not edit.
+#
+# Edit the presets in github.com/matchory/coding-style and re-run the command. Local deviations
+# belong in your own pyproject.toml, which wins over anything extended from here.
+extend = "ruff/strict.toml"
