@@ -9,6 +9,17 @@
         ]
     },
     "hooks": {
+        "PreToolUse": [
+            {
+                "matcher": "Edit|Write|MultiEdit",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "f=$(jq -r '.tool_input.file_path // empty'); case \"$f\" in .matchory/*|*/.matchory/*|.editorconfig|*/.editorconfig) echo \"$f is generated. Refresh it with: uv run matchory-coding-style sync --preset strict\" >&2; exit 2;; esac"
+                    }
+                ]
+            }
+        ],
         "PostToolUse": [
             {
                 "matcher": "Edit|Write",
