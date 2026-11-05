@@ -83,9 +83,8 @@ uninstalls the old one and installs the new one in the same run. No forced reins
 
 `pyproject.toml` pins `matchory-coding-style` with a floating lower bound
 (`matchory-coding-style>=0.1.2`), while `.pre-commit-config.yaml` pins the hook to a fixed
-`rev: v0.1.2`. These agree today, but nothing keeps them in sync automatically, and Dependabot will
-actively pull them apart: it has no pre-commit ecosystem configured here, so it bumps the
-`uv.lock` dependency without ever touching `rev:`.
+`rev: v0.1.2`. Dependabot updates both, through its `uv` and `pre-commit` ecosystems, but in
+separate pull requests, so for a while after one merges the two can disagree.
 
 The good news is that the resulting drift announces itself. `verify` compares `.matchory/` against
 whatever `matchory-coding-style` is currently installed, so once a newer version changes the
@@ -96,4 +95,5 @@ silently. The fix is:
 uv run matchory-coding-style sync --preset strict
 ```
 
-Commit the result, and bump `.pre-commit-config.yaml`'s `rev:` to match the new version.
+Commit the result on that pull request, and merge the matching `pre-commit` pull request (or bump
+`.pre-commit-config.yaml`'s `rev:` by hand) so the hook runs the same version.
