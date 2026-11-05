@@ -50,3 +50,26 @@ updates:
         applies-to: security-updates
         patterns: ["*"]
     labels: [dependencies, python]
+
+  # Keeps the matchory-coding-style hook `rev:` in .pre-commit-config.yaml moving alongside the
+  # matchory-coding-style dependency in uv.lock; without it the two drift apart.
+  - package-ecosystem: pre-commit
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "05:00"
+      timezone: Europe/Berlin
+    cooldown:
+      default-days: 3
+      semver-major-days: 3
+      semver-minor-days: 3
+      semver-patch-days: 3
+    groups:
+      minor-and-patch:
+        applies-to: version-updates
+        update-types: [minor, patch]
+      security:
+        applies-to: security-updates
+        patterns: ["*"]
+    labels: [dependencies, python]
